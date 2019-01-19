@@ -88,7 +88,6 @@ export default {
   },
   created () {
     this.classMap = ['decrease', 'discount', 'guarantee', 'invoice', 'special'];
-    console.log(this.seller);
   },
   components: {
     Star

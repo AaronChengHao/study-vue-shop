@@ -12,11 +12,14 @@
         <router-link to="/seller">商家</router-link>
       </div>
     </div>
-    <router-view :seller="seller"></router-view>
+    <keep-alive>
+    <router-view  :seller="seller"></router-view>
+    </keep-alive>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
+  import {urlParse} from '@/common/js/util';
   import header from './components/header/header.vue';
   import sellData from './../data.json';
   // const ERR_OK = 0;
@@ -24,16 +27,22 @@
   export default {
     data () {
       return {
-        seller: {}
+        seller: {
+          id: (function () {
+            let queryParam = urlParse();
+            return queryParam.id;
+          })()
+        }
       };
     },
     created () {
       this.$http.get('/api/seller').then((response) => {
         console.log(response);
       }, (err) => {
-          this.seller = sellData.seller;
-          console.log(this.seller);
           console.log(err);
+          // this.seller = sellData.seller;
+          this.seller = Object.assign({}, this.seller, sellData.seller);
+          console.log(this.seller);
       });
     },
     components: {

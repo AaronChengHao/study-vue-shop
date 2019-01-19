@@ -15,7 +15,7 @@
                 <li class="food-list food-list-hook" v-for="(item,index) in goods" :key="index">
                     <h1 class="title">{{item.name}}</h1>
                     <ul>
-                        <li v-for="(food,j) in item.foods" :key="j" class="food-item border-1px">
+                        <li @click="selectFood(food,$event)" v-for="(food,j) in item.foods" :key="j" class="food-item border-1px">
                             <div class="icon" >
                                 <img width="57" height="57" :src="food.icon" alt="">
                             </div>
@@ -29,13 +29,17 @@
                                 <div class="price">
                                     <span class="now">${{food.price}}</span><span class="old" v-show="food.oldPrice">${{food.oldPrice}}</span>
                                 </div>
+                                <div class="cartcontrol-wrapper">
+                                    <cartcontrol @cartadd="cartAdd" :food="food"></cartcontrol>
+                                </div>
                             </div>
                         </li>
                     </ul>
                 </li>
             </ul>
         </div>
-        <Shopcart :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></Shopcart>
+        <Shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></Shopcart>
+        <Food :food="selectedFood" ref="food"></Food>
     </div>
 </template>
 
@@ -43,8 +47,10 @@
 import sellData from './../../../data.json';
 import BScroll from 'better-scroll';
 import Shopcart from '@/components/shopcart/shopcart';
-console.log(Shopcart);
-console.log(BScroll);
+import Food from '@/components/food/food';
+import Cartcontrol from '@/components/cartcontrol/cartcontrol';
+console.log(Cartcontrol);
+console.log(Food);
 export default {
     props: {
         seller: {
@@ -57,7 +63,8 @@ export default {
             classMap: ['decrease', 'discount', 'guarantee', 'invoice', 'special'],
             menuScroll: {},
             listHeight: [],
-            scrollY: 0
+            scrollY: 0,
+            selectedFood: {}
         };
     },
     computed: {
@@ -70,6 +77,17 @@ export default {
                 }
             }
             return 0;
+        },
+        selectFoods () {
+            let foods = [];
+            this.goods.forEach((good) => {
+                good.foods.forEach((food) => {
+                    if (food.count) {
+                        foods.push(food);
+                    }
+                });
+            });
+            return foods;
         }
     },
     created () {
@@ -98,7 +116,8 @@ export default {
                 click: true
             });
             this.foodsScroll = new BScroll(this.$refs['foods-wrapper'], {
-                probeType: 3
+                probeType: 3,
+                click: true
             });
             this.foodsScroll.on('scroll', (pos) => {
                 this.scrollY = Math.abs(Math.round(pos.y));
@@ -114,10 +133,31 @@ export default {
                 this.listHeight.push(height);
             }
             console.log(this.listHeight);
+        },
+        _drop (target) {
+            // this.$refs.shopcart.drop();
+            this.$nextTick(() => {
+                this.$refs.shopcart.drop(target);
+            });
+        },
+        cartAdd (target) {
+            this._drop(target);
+        },
+        selectFood (food, event) {
+            if (!event._constructed) {
+                return;
+            }
+            this.selectedFood = food;
+            this.$refs.food.show();
         }
     },
     components: {
-        Shopcart
+        Shopcart, Cartcontrol, Food
+    },
+    event: {
+        'cart.add' (target) {
+            this._drop(target);
+        }
     }
 };
 </script>
@@ -223,4 +263,8 @@ export default {
                             text-decoration: line-through
                             font-size: 10px
                             color: rgb(147,153,159)
+                    .cartcontrol-wrapper
+                        position: absolute
+                        right: 0
+                        bottom: 12px
 </style>
